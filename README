@@ -1,0 +1,46 @@
+packages.js
+-------------------------------------
+Implements tracking number verification for UPS, FedEx, and USPS.  This will not tell you rather a tracking number
+represents a valid package.  It will only determine if the tracking number is in the correct format and passes
+the checkbit verification.  Using the carrier specific check-bit methods it can narrow the number down to which
+carrier it belongs to and provide a url to go track it at.
+
+Sources
+------------------------------------
+http://answers.google.com/answers/threadview/id/207899.html
+http://www.codeproject.com/KB/recipes/Generate_UPS_Check_Digit.aspx
+http://images.fedex.com/us/solutions/ppe/FedEx_Ground_Label_Layout_Specification.pdf
+http://www.usps.com/cpim/ftp/pubs/pub91.pdf
+http://www.usps.com/cpim/ftp/pubs/pub109.pdf
+
+Compatability
+------------------------------------
+UPS: 100%, or at least should be
+FedEx: Validates fedex express, and should validate most fedex ground (the FedEx 96 style barcode), see notes for more details
+USPS: Should validate Certified, Insured, Registered, Return Receipt, and Delivery Confirm. See notes below.  Other methods probably won't
+	  validate as the service prefix will be different
+
+Notes
+------------------------------------
+Fedex Ground and USPS are particularly challenging since they both employ the same barcode check scheme and use
+confusing prefix systems (unlike UPS which has the 1Z thing prefix for every code they have... talk about good idea).
+The difference between usps and fedex is the prefix.  Unfortunately its difficult to decode the prefixes correctly as the documents
+can be confusing.  Fedex states all fedex ground should start with 96 but there seems to be a confusing variant of it that 
+starts with 00 or others that just dont start with 96 at all. For now I am validating fedex ground as anything that starts
+with 96 or 00 and has the proper checkbit (though I think the 00 is unneeded).
+
+USPS is more complex as it it doesn't have a single prefix.  Different prefixes indicate different service types.  The ones
+I've found so far appear to be the common ones, but theres a solid chance I'm missing some since they are spread over a
+large number of documents.  Below are the prefixes being validated as usps assuming they have the proper checkbit.
+
+Certified Mail: 71, Insured Mail: 73, Registered Mail: 77, Return Receipt: 81, Delivery Confirm: 91, Zip+Delivery Confirm: 420. 
+
+TL;DR;  This is not an exhaustive verification system, particularly usps has too many prefixes that are not documented or documented 
+        in various places to figure out.  Also complicating matters is that fedex and usps use the same check digit scheme.  Should get most.
+	  
+	  
+Documentation (more available in the source)
+------------------------------------
+Two functions are provided in the TrackPkg namespace:
+TrackPkg.IsTrackingNumber(number) 	- Returns 'ups', 'fedex', or 'usps' if a tracking number is validated, undefined if not valid (or unknown)
+TrackPkg.GetTrackingUrl(number) 	- If valid, this function returns the appropriate tracking number url for a client to visit.
